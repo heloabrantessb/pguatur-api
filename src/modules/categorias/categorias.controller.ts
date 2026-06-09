@@ -29,7 +29,7 @@ export class CategoriaController {
     async buscarPorId(req: FastifyRequest, reply: FastifyReply) {
         try {
             const { id } = req.params as { id: string }
-            const categoria = await this.categoriaService.buscarCategoriaPorId(id)
+            const categoria = await this.categoriaService.buscarCategoriaPorId(Number(id))
             return reply.status(200).send(categoria)
         } catch (error) {
             return reply.status(500).send(error)
@@ -40,7 +40,7 @@ export class CategoriaController {
         try {
             const { id } = req.params as { id: string }
             const input = req.body as CategoriaInput
-            const categoria = await this.categoriaService.atualizarCategoria(id, input)
+            const categoria = await this.categoriaService.atualizarCategoria(Number(id), input)
             return reply.status(200).send(categoria)
         } catch (error) {
             return reply.status(500).send(error)
@@ -50,7 +50,7 @@ export class CategoriaController {
     async deletar(req: FastifyRequest, reply: FastifyReply) {
         try {
             const { id } = req.params as { id: string }
-            const categoria = await this.categoriaService.deletarCategoria(id)
+            const categoria = await this.categoriaService.deletarCategoria(Number(id))
             return reply.status(200).send(categoria)
         } catch (error) {
             return reply.status(500).send(error)

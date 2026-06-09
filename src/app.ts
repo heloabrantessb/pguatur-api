@@ -1,4 +1,5 @@
 import fastify from 'fastify'
+import categoriasRoutes from './modules/categorias/categorias.routes.js'
 
 const app = fastify({
   logger: true,
@@ -12,5 +13,7 @@ app.get('/health', async () => {
 app.get('/', async () => {
   return { message: 'Bem-vindo ao PGuaTur API' }
 })
+
+app.register(categoriasRoutes, { prefix: '/categorias' })
 
 export { app }
