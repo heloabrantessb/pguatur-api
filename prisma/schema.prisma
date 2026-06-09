@@ -8,74 +8,72 @@ datasource db {
 }
 
 enum FuncaoUsuario {
+  admin
   usuario
-  administrador
 }
 
 enum TipoCategoria {
   local
   evento
+  ambos
 }
 
 model Usuario {
   id           Int           @id @default(autoincrement())
-  nome         String
-  email        String        @unique
-  hashSenha    String?       @map("hash_senha")
-  funcao       FuncaoUsuario @default(usuario)
+  nome         String        @db.VarChar(255)
+  email        String        @unique @db.VarChar(255)
+  hashSenha    String        @map("hash_senha") @db.VarChar(255)
+  funcao       FuncaoUsuario
   fotoPerfil   String?       @map("foto_perfil")
-  criadoEm    DateTime      @default(now()) @map("criado_em")
-  atualizadoEm DateTime     @updatedAt @map("atualizado_em")
+  criadoEm     DateTime      @default(now()) @map("criado_em")
+  atualizadoEm DateTime      @updatedAt @map("atualizado_em")
 
   rotas        Rota[]
   preferencias Preferencia[]
-  avaliacoes   Avaliacao[]
-  favoritos    Favorito[]
 
   @@map("usuarios")
 }
 
-model Categoria {
-  id   Int           @id @default(autoincrement())
-  nome String        @unique
-  tipo TipoCategoria
+model Rota {
+  id        Int      @id @default(autoincrement())
+  titulo    String   @db.VarChar(255)
+  criadoEm  DateTime @default(now()) @map("criado_em")
+  usuarioId Int      @map("usuarios_id")
 
-  atrativos    AtrativoCategoria[]
-  preferencias Preferencia[]
+  usuario   Usuario        @relation(fields: [usuarioId], references: [id])
+  atrativos RotaAtrativo[]
 
-  @@map("categorias")
+  @@map("rotas")
 }
 
 model Atrativo {
   id           Int      @id @default(autoincrement())
-  nome         String
-  descricao    String?
-  endereco     String
-  latitude     Decimal  @db.Decimal(9, 6)
-  longitude    Decimal  @db.Decimal(9, 6)
+  nome         String   @db.VarChar(100)
+  descricao    String
+  endereco     String   @db.VarChar(255)
+  latitude     Decimal  @db.Decimal(10, 8)
+  longitude    Decimal  @db.Decimal(11, 8)
   ativo        Boolean  @default(true)
-  valorEntrada Decimal? @map("valor_entrada") @db.Decimal(9, 2)
-  criadoEm    DateTime  @default(now()) @map("criado_em")
+  criadoEm     DateTime @default(now()) @map("criado_em")
   atualizadoEm DateTime @updatedAt @map("atualizado_em")
+  valorEntrada Decimal? @map("valor_entrada") @db.Decimal(10, 2)
 
-  categorias   AtrativoCategoria[]
-  imagens      AtrativoImagem[]
-  rotas        RotaAtrativo[]
-  avaliacoes   Avaliacao[]
-  favoritos    Favorito[]
-  local        Local?
-  evento       Evento?
+  local      Local?
+  evento     Evento?
+  imagens    AtrativoImagem[]
+  categorias AtrativoCategoria[]
+  rotas      RotaAtrativo[]
 
   @@map("atrativos")
 }
 
 model Local {
-  id              Int      @id @default(autoincrement())
-  atrativoId      Int      @unique @map("atrativos_id")
-  horarioAbertura String   @map("horario_abertura") // formato "HH:MM"
-  horarioFim      String   @map("horario_fim")
+  id                Int      @id @default(autoincrement())
+  atrativoId        Int      @unique @map("atrativos_id")
+  horarioAbertura   DateTime @map("horario_abertura") @db.Time()
+  horarioFechamento DateTime @map("horario_fechamento") @db.Time()
 
-  atrativo        Atrativo @relation(fields: [atrativoId], references: [id], onDelete: Cascade)
+  atrativo Atrativo @relation(fields: [atrativoId], references: [id])
 
   @@map("locais")
 }
@@ -86,28 +84,31 @@ model Evento {
   dataInicio DateTime @map("data_inicio")
   dataFim    DateTime @map("data_fim")
 
-  atrativo   Atrativo @relation(fields: [atrativoId], references: [id], onDelete: Cascade)
+  atrativo Atrativo @relation(fields: [atrativoId], references: [id])
 
   @@map("eventos")
 }
 
-model AtrativoImagem {
-  id         Int      @id @default(autoincrement())
-  atrativoId Int      @map("atrativos_id")
-  url        String
-  ordem      Int      @default(0)
+model Categoria {
+  id       Int           @id @default(autoincrement())
+  titulo   String        @db.VarChar(45)
+  ativo    Boolean       @default(true)
+  criadoEm DateTime      @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+  tipo     TipoCategoria
 
-  atrativo   Atrativo @relation(fields: [atrativoId], references: [id], onDelete: Cascade)
+  atrativos    AtrativoCategoria[]
+  preferencias Preferencia[]
 
-  @@map("atrativos_imagens")
+  @@map("categorias")
 }
 
 model AtrativoCategoria {
   atrativoId  Int @map("atrativos_id")
   categoriaId Int @map("categorias_id")
 
-  atrativo    Atrativo  @relation(fields: [atrativoId], references: [id], onDelete: Cascade)
-  categoria   Categoria @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  atrativo  Atrativo  @relation(fields: [atrativoId], references: [id])
+  categoria Categoria @relation(fields: [categoriaId], references: [id])
 
   @@id([atrativoId, categoriaId])
   @@map("atrativos_categorias")
@@ -117,59 +118,32 @@ model Preferencia {
   usuarioId   Int @map("usuarios_id")
   categoriaId Int @map("categorias_id")
 
-  usuario     Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  categoria   Categoria @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+  categoria Categoria @relation(fields: [categoriaId], references: [id])
 
   @@id([usuarioId, categoriaId])
   @@map("preferencias")
 }
 
-model Rota {
-  id        Int      @id @default(autoincrement())
-  titulo    String
-  usuarioId Int      @map("usuarios_id")
-  criadoEm DateTime @default(now()) @map("criado_em")
-
-  usuario   Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  atrativos RotaAtrativo[]
-
-  @@map("rotas")
-}
-
 model RotaAtrativo {
+  id         Int @id @default(autoincrement())
   rotaId     Int @map("rotas_id")
   atrativoId Int @map("atrativos_id")
   ordem      Int
 
-  rota       Rota     @relation(fields: [rotaId], references: [id], onDelete: Cascade)
-  atrativo   Atrativo @relation(fields: [atrativoId], references: [id], onDelete: Cascade)
+  rota     Rota     @relation(fields: [rotaId], references: [id])
+  atrativo Atrativo @relation(fields: [atrativoId], references: [id])
 
-  @@id([rotaId, atrativoId])
   @@map("rota_atrativos")
 }
 
-model Avaliacao {
-  id         Int      @id @default(autoincrement())
-  usuarioId  Int      @map("usuarios_id")
-  atrativoId Int      @map("atrativos_id")
-  nota       Int      // Nota de 1 a 5
-  comentario String?
-  criadoEm  DateTime @default(now()) @map("criado_em")
+model AtrativoImagem {
+  id         Int     @id @default(autoincrement())
+  url        String
+  imagemCapa Boolean @default(false) @map("imagem_capa")
+  atrativoId Int     @map("atrativos_id")
 
-  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  atrativo   Atrativo @relation(fields: [atrativoId], references: [id], onDelete: Cascade)
+  atrativo Atrativo @relation(fields: [atrativoId], references: [id])
 
-  @@unique([usuarioId, atrativoId])
-  @@map("avaliacoes")
-}
-
-model Favorito {
-  usuarioId  Int @map("usuarios_id")
-  atrativoId Int @map("atrativos_id")
-
-  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  atrativo   Atrativo @relation(fields: [atrativoId], references: [id], onDelete: Cascade)
-
-  @@id([usuarioId, atrativoId])
-  @@map("favoritos")
+  @@map("atrativo_imagens")
 }
