@@ -1,15 +1,19 @@
 import fastify from 'fastify'
 import fastifyJwt from '@fastify/jwt'
-import categoriasRoutes from './modules/categorias/categorias.routes.js'
-import authRoutes from './modules/auth/auth.routes.js'
+import categoriasRoutes from './modules/categorias/categorias.routes'
+import authRoutes from './modules/auth/auth.routes'
 
 const app = fastify({
   logger: true,
 })
 
+
+
+// JWT
 app.register(fastifyJwt, {
   secret: process.env.JWT_SECRET || 'supersecretkey',
 })
+
 app.decorate('authenticate', async (request: any, reply: any) => {
   try {
     await request.jwtVerify()
@@ -18,16 +22,12 @@ app.decorate('authenticate', async (request: any, reply: any) => {
   }
 })
 
+app.register(categoriasRoutes, { prefix: '/categorias' })
+app.register(authRoutes, { prefix: '/auth' })
+
 // Rota de Health Check
 app.get('/health', async () => {
   return { status: 'ok', timestamp: new Date() }
 })
-
-app.get('/', async () => {
-  return { message: 'Bem-vindo ao PGuaTur API' }
-})
-
-app.register(categoriasRoutes, { prefix: '/categorias' })
-app.register(authRoutes, { prefix: '/auth' })
 
 export { app }
