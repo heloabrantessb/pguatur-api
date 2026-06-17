@@ -14,7 +14,11 @@
   "include": [
     "@types",
     "src/**/*.ts",
-    "@types/**/*.d.ts",
-    "test/categorias.controller.test.ts"
+    "@types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test"
   ]
-}
+}
